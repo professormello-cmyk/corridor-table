@@ -3,47 +3,87 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Corridor Table</title>
-  <link rel="stylesheet" href="styles.css" />
+  <title>corridor-table</title>
+  <style>
+    :root { --bg:#0b0f14; --panel:#121a24; --ink:#e9eef7; --muted:#9fb0c3; --line:#243243; --accent:#67b7ff; }
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
+    header{ padding:18px 18px 8px 18px; border-bottom:1px solid var(--line); }
+    h1{ margin:0; font-size:22px; letter-spacing:.3px; }
+    header p{ margin:6px 0 0 0; color:var(--muted); font-size:13px; }
+    .wrap{ display:grid; grid-template-columns: 1.3fr .7fr; gap:14px; padding:14px; }
+    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
+
+    .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
+    .card h2{ margin:0; padding:12px 14px; font-size:14px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600; }
+    .pad{ padding:12px 14px; }
+
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(18, minmax(34px, 1fr));
+      gap:6px;
+      padding:12px;
+      overflow:auto;
+    }
+    .el{
+      position:relative;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,0.03);
+      border-radius:10px;
+      padding:8px 6px 7px 6px;
+      cursor:pointer;
+      user-select:none;
+      min-height:44px;
+    }
+    .el:hover{ outline:2px solid rgba(103,183,255,.35); }
+    .el.active{ outline:2px solid var(--accent); }
+    .sym{ font-weight:800; font-size:13px; }
+    .z{ position:absolute; top:6px; right:7px; font-size:10px; color:var(--muted); }
+
+    .kv{ display:grid; grid-template-columns: 1fr auto; gap:8px 10px; align-items:baseline; font-size:13px; }
+    .k{ color:var(--muted); }
+    .v{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+    .hr{ height:1px; background:var(--line); margin:10px 0; }
+
+    details{ margin-top:10px; }
+    details summary{ cursor:pointer; color:var(--muted); }
+    pre{ background:#0a0f16; border:1px solid var(--line); padding:10px; border-radius:10px; overflow:auto; color:#d7e3f2; font-size:12px; }
+    .foot{ color:var(--muted); font-size:12px; padding:10px 14px 14px; }
+    .tag{ display:inline-block; padding:2px 8px; border:1px solid var(--line); border-radius:999px; font-size:11px; color:var(--muted); }
+  </style>
 </head>
+
 <body>
-  <header class="top">
+  <header>
     <h1>corridor-table</h1>
     <p>Tabela periódica interativa: clique no elemento para ver índices de corredor (Δ, V, R, leakage) e métricas derivadas.</p>
   </header>
 
-  <main class="layout">
-    <section id="pt" class="pt" aria-label="Tabela periódica"></section>
-
-    <aside class="panel" aria-label="Painel de métricas">
-      <h2 id="title">Selecione um elemento</h2>
-      <div id="meta" class="meta">Clique em um símbolo na tabela.</div>
-
-      <div class="grid">
-        <div class="card"><div class="k">Δ (eV)</div><div class="v" id="dlt">—</div></div>
-        <div class="card"><div class="k">V (eV)</div><div class="v" id="v">—</div></div>
-        <div class="card"><div class="k">R = |Δ|/|V|</div><div class="v" id="r">—</div></div>
-        <div class="card"><div class="k">Leakage = sin²φ</div><div class="v" id="leak">—</div></div>
+  <div class="wrap">
+    <section class="card">
+      <h2>Tabela periódica (clique)</h2>
+      <div id="ptable" class="grid" aria-label="Tabela periódica"></div>
+      <div class="foot">
+        <span class="tag">GitHub Pages</span>
+        <span class="tag">estático</span>
+        <span class="tag">sem backend</span>
       </div>
+    </section>
 
-      <h3>Métricas derivadas</h3>
-      <div class="grid">
-        <div class="card"><div class="k">Regime</div><div class="v" id="regime">—</div></div>
-        <div class="card"><div class="k">Δmix ≈ 2|V| (eV)</div><div class="v" id="dmix">—</div></div>
-        <div class="card"><div class="k">Comentário</div><div class="v small" id="comment">—</div></div>
-      </div>
+    <aside class="card">
+      <h2>Selecione um elemento</h2>
+      <div class="pad">
+        <div class="kv">
+          <div class="k">Elemento</div><div class="v" id="name">—</div>
+          <div class="k">Δ (eV)</div><div class="v" id="delta">—</div>
+          <div class="k">V (eV)</div><div class="v" id="V">—</div>
+          <div class="k">R = |Δ|/|V|</div><div class="v" id="R">—</div>
+          <div class="k">Leakage = sin²φ</div><div class="v" id="leak">—</div>
+        </div>
 
-      <details class="raw">
-        <summary>Ver JSON bruto do elemento</summary>
-        <pre id="raw">—</pre>
-      </details>
-    </aside>
-  </main>
+        <div class="hr"></div>
 
-  <footer class="foot">
-    <small>GitHub Pages (site estático). Sem backend. Sem drama.</small>
-  </footer>
+        <div class="kv">
+          <div class="k">Regime</div><div class="v" id="regime">—</div>
+          <div class="k">Δmix ≈ 2|V| (eV)</div><div class="v" id="dmix">—</div>
+          <div class="k">Comentário</div><div class="v" id="comment">—</
 
-  <script src="app.js"></script>
-</body>
-</html>
