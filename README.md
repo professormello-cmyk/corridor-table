@@ -2,832 +2,460 @@
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>corridor-table</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Pocket Corridor Periodic Table — Δ,V → R, sin²φ, Δmix</title>
   <style>
-    :root { --bg:#0b0f14; --fg:#e6edf3; --muted:#9aa4af; --card:#111826; --line:#233044; --accent:#6ee7ff; --bad:#ff6b6b; --ok:#6bff95; --mid:#ffd166; }
-    body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background: var(--bg); color: var(--fg); }
-    header { padding: 18px 18px 10px; border-bottom:1px solid var(--line); }
-    h1 { margin:0; font-size: 22px; letter-spacing: .3px; }
-    .sub { margin-top:6px; color: var(--muted); font-size: 14px; line-height:1.35; }
-    .wrap { display:grid; grid-template-columns: 1.35fr .95fr; gap: 14px; padding: 14px; }
-    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
-    .card { background: var(--card); border:1px solid var(--line); border-radius: 14px; padding: 12px; }
-    .card h2 { margin:0 0 10px; font-size: 16px; color: var(--fg); }
-    .hint { color: var(--muted); font-size: 13px; margin: 0 0 10px; line-height:1.35; }
-    .pt { width:100%; overflow:auto; padding-bottom:6px; }
-    .grid {
-      display:grid;
-      grid-template-columns: repeat(18, minmax(44px, 1fr));
-      gap: 6px;
-      min-width: 792px;
+    :root{
+      --bg:#0b0d12; --fg:#e8edf2; --muted:#a7b0bb; --card:#121725; --edge:#273047;
+      --ok:#2cff8a; --mid:#ffcc33; --bad:#ff4d4d;
     }
-    .rowlabel {
-      grid-column: 1 / span 18;
-      color: var(--muted);
-      font-size: 12px;
-      margin: 8px 0 2px;
+    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:var(--bg); color:var(--fg);}
+    header{ padding:14px 16px; border-bottom:1px solid var(--edge); display:flex; gap:12px; align-items:center; flex-wrap:wrap;}
+    header h1{ font-size:16px; margin:0; font-weight:700; letter-spacing:.2px;}
+    header .sub{ color:var(--muted); font-size:12px; }
+    .wrap{ display:grid; grid-template-columns: 1fr 340px; gap:14px; padding:14px; }
+    @media (max-width: 980px){ .wrap{ grid-template-columns: 1fr; } }
+    .card{ background:var(--card); border:1px solid var(--edge); border-radius:14px; padding:12px; }
+    .grid{ display:grid; grid-template-columns: repeat(18, minmax(34px, 1fr)); gap:6px; }
+    .cell{
+      position:relative; height:46px; border-radius:10px; border:1px solid var(--edge);
+      background: rgba(255,255,255,.02); cursor:pointer; user-select:none;
+      display:flex; flex-direction:column; justify-content:center; padding:6px 6px 5px;
+      transition: transform .05s ease, border-color .15s ease, box-shadow .15s ease;
     }
-    .el {
-      user-select:none;
-      cursor:pointer;
-      border:1px solid var(--line);
-      border-radius: 10px;
-      padding: 8px 6px;
-      text-align:center;
-      background: rgba(255,255,255,.03);
-      transition: transform .04s ease, border-color .12s ease, background .12s ease;
+    .cell:hover{ transform: translateY(-1px); border-color:#3a4666; }
+    .cell .sym{ font-weight:800; font-size:13px; line-height:1; }
+    .cell .mini{ color:var(--muted); font-size:10px; line-height:1.1; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .cell.filled{ box-shadow: 0 0 0 1px rgba(255,255,255,.05) inset; }
+    .cell.r_ok{ outline: 2px solid rgba(44,255,138,.22); }
+    .cell.r_mid{ outline: 2px solid rgba(255,204,51,.22); }
+    .cell.r_bad{ outline: 2px solid rgba(255,77,77,.22); }
+    .cell.r_ok::after,.cell.r_mid::after,.cell.r_bad::after{
+      content:""; position:absolute; right:6px; top:6px; width:8px; height:8px; border-radius:50%;
     }
-    .el:hover { transform: translateY(-1px); border-color: rgba(110,231,255,.55); }
-    .el.sel { outline: 2px solid rgba(110,231,255,.65); border-color: rgba(110,231,255,.65); }
+    .cell.r_ok::after{ background:var(--ok); }
+    .cell.r_mid::after{ background:var(--mid); }
+    .cell.r_bad::after{ background:var(--bad); }
 
-    /* estado de dados */
-    .el.filled { background: rgba(107,255,149,.06); }
-    .el.warn   { background: rgba(255,107,107,.06); }
-
-    /* regime (derivado) */
-    .el.r_ok  { box-shadow: inset 0 0 0 9999px rgba(107,255,149,.045); }
-    .el.r_mid { box-shadow: inset 0 0 0 9999px rgba(255,209,102,.045); }
-    .el.r_bad { box-shadow: inset 0 0 0 9999px rgba(255,107,107,.045); }
-
-    .sym { font-weight: 700; font-size: 14px; }
-    .z { font-size: 11px; color: var(--muted); margin-top: 2px; }
-    .name { font-size: 11px; color: var(--muted); margin-top: 4px; white-space: nowrap; overflow:hidden; text-overflow: ellipsis; }
-
-    .kv { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .k { color: var(--muted); font-size: 12px; }
-    .v { font-size: 14px; margin-top: 2px; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    details { margin-top: 10px; }
-    textarea { width:100%; min-height: 160px; border-radius: 10px; border:1px solid var(--line); background:#0b1220; color:var(--fg); padding:10px; box-sizing:border-box; }
-    footer { padding: 10px 14px 18px; color: var(--muted); font-size: 12px; }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .pill { display:inline-block; padding:2px 8px; border:1px solid var(--line); border-radius: 999px; color: var(--muted); font-size: 12px; margin-left: 8px; }
-    .btnbar { display:flex; gap:8px; flex-wrap:wrap; margin: 8px 0 0; }
-    button {
-      background: #0b1220; color: var(--fg);
-      border: 1px solid var(--line); border-radius: 10px;
-      padding: 8px 10px; cursor: pointer; font-size: 13px;
+    .panel h2{ margin:0 0 10px; font-size:14px; }
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:10px; }
+    label{ font-size:11px; color:var(--muted); }
+    input, textarea{
+      width:100%; box-sizing:border-box; border-radius:10px; border:1px solid var(--edge);
+      background:#0f1422; color:var(--fg); padding:9px 10px; font-size:13px; outline:none;
     }
-    button:hover { border-color: rgba(110,231,255,.55); }
-    .stat { margin-top: 8px; font-size: 12px; color: var(--muted); line-height: 1.4; }
-    .good { color: var(--ok); }
-    .mid  { color: var(--mid); }
-    .bad  { color: var(--bad); }
-    code { background: rgba(255,255,255,.05); padding: 1px 6px; border-radius: 8px; }
+    input:focus, textarea:focus{ border-color:#3a4666; }
+    .btns{ display:flex; gap:10px; flex-wrap:wrap; margin:10px 0 0; }
+    button{
+      border:1px solid var(--edge); background:#0f1422; color:var(--fg);
+      padding:9px 10px; border-radius:10px; cursor:pointer; font-weight:700; font-size:13px;
+    }
+    button:hover{ border-color:#3a4666; }
+    .kpi{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top:10px; }
+    .kpi .box{ border:1px solid var(--edge); border-radius:12px; padding:10px; background:rgba(255,255,255,.02); }
+    .kpi .box .t{ color:var(--muted); font-size:11px; }
+    .kpi .box .v{ font-size:16px; font-weight:900; margin-top:4px; }
+    .small{ color:var(--muted); font-size:11px; line-height:1.35; margin-top:10px;}
+    .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; }
   </style>
 </head>
+
 <body>
-  <header>
-    <h1>corridor-table <span class="pill">GitHub Pages</span></h1>
-    <div class="sub">
-      Tabela periódica interativa para índices de “corredor” (modelo 2×2).
-      Cole CSV/JSON (um por elemento) e o site calcula <span class="mono">R</span>, <span class="mono">Δmix</span> e
-      <span class="mono">leak = sin²φ</span>. <b>Nesta versão</b>, se você não fornecer <span class="mono">Δ</span> e <span class="mono">V</span>
-      para um elemento, o site <b>auto-estima</b> um par (heurístico) e calcula tudo para os 118.
+<header>
+  <h1>PCPT (operacional): <span class="mono">Δ,V → R, sin²φ, Δmix</span></h1>
+  <div class="sub">Implementa diretamente o modelo 2×2 do seu manuscrito (Eq. <span class="mono">R_and_leakage</span>, <span class="mono">adiabatic_gap_student</span>).</div>
+</header>
+
+<div class="wrap">
+  <div class="card">
+    <div id="statline" class="small"></div>
+    <div id="pt" class="grid" aria-label="tabela periódica"></div>
+    <div class="small">
+      <b>Regimes (por R = |Δ|/|V|):</b>
+      <span class="mono">R ≥ 3</span> robusto · <span class="mono">1 ≤ R &lt; 3</span> transição · <span class="mono">R &lt; 1</span> corredor.
+      <br/>Obs.: isto é uma régua operacional, não um teorema de Deus.
     </div>
-  </header>
-
-  <div class="wrap">
-    <section class="card">
-      <h2>Tabela periódica (118)</h2>
-      <p class="hint">
-        Clique em um símbolo. Verde = estável; amarelo = intermediário; vermelho = corredor.
-        Você pode colar dados reais apenas para alguns elementos: o resto fica auto-preenchido (e pode ser sobrescrito depois).
-      </p>
-      <div class="pt">
-        <div id="pt-grid" class="grid" aria-label="Periodic table"></div>
-      </div>
-
-      <h2 style="margin-top:12px;">Colar dados (CSV ou JSON)</h2>
-      <p class="hint">
-        <b>CSV</b> esperado: <code>symbol,delta,v,leak,comment</code> (leak/comment opcionais). Ex.:<br/>
-        <span class="mono">Pd,0.12,0.18,,promo corridor</span><br/>
-        <b>JSON</b> esperado: objeto por símbolo. Ex.:<br/>
-        <span class="mono">{"Pd":{"delta":0.12,"v":0.18,"comment":"..."}}</span>
-      </p>
-      <textarea id="in-data" class="mono" placeholder="Cole aqui CSV ou JSON..."></textarea>
-      <div class="btnbar">
-        <button id="btn-apply">Aplicar (sobrescreve apenas o que você colou)</button>
-        <button id="btn-autofill">Auto-preencher (118) agora</button>
-        <button id="btn-export">Exportar TUDO (JSON: dados + derivados)</button>
-        <button id="btn-export-raw">Exportar só entrada (JSON CORRIDOR)</button>
-        <button id="btn-clear">Limpar dados</button>
-        <button id="btn-demo">Inserir demo</button>
-      </div>
-      <div class="stat" id="statline">Nenhum dado carregado.</div>
-
-      <details>
-        <summary>Heurística de auto-estima (curta e honesta)</summary>
-        <div class="hint" style="margin-top:8px;">
-          Para elementos sem dados colados, usamos um gerador determinístico (por Z/bloco/período e alguns “suspeitos usuais” de quase-degenerescência em d/f).
-          Isso é só um <b>prior</b> para preencher 118 casas e deixar o front-end funcionando como “painel de diagnóstico”.
-          Assim que você colar valores do seu pipeline (Feshbach/downfolding/fit), eles prevalecem.
-        </div>
-      </details>
-    </section>
-
-    <aside class="card">
-      <h2>Selecione um elemento</h2>
-      <p class="hint" id="sel-hint">Clique em um símbolo na tabela.</p>
-
-      <div class="kv">
-        <div>
-          <div class="k">Δ (eV)</div>
-          <div class="v mono" id="out-delta">—</div>
-        </div>
-        <div>
-          <div class="k">V (eV)</div>
-          <div class="v mono" id="out-v">—</div>
-        </div>
-        <div>
-          <div class="k">R = |Δ|/|V|</div>
-          <div class="v mono" id="out-r">—</div>
-        </div>
-        <div>
-          <div class="k">Leakage = sin²φ</div>
-          <div class="v mono" id="out-leak">—</div>
-        </div>
-      </div>
-
-      <h2 style="margin-top:14px;">Métricas derivadas</h2>
-      <div class="kv">
-        <div>
-          <div class="k">Regime</div>
-          <div class="v" id="out-reg">—</div>
-        </div>
-        <div>
-          <div class="k">Δmix = √(Δ²+4V²) (eV)</div>
-          <div class="v mono" id="out-dmix">—</div>
-        </div>
-      </div>
-      <div style="margin-top:10px;">
-        <div class="k">Origem do Δ,V</div>
-        <div class="v" id="out-src">—</div>
-      </div>
-      <div style="margin-top:10px;">
-        <div class="k">Comentário</div>
-        <div class="v" id="out-cmt">—</div>
-      </div>
-
-      <details>
-        <summary>Ver JSON bruto do elemento</summary>
-        <textarea id="raw" class="mono" readonly></textarea>
-      </details>
-
-      <details>
-        <summary>Convenções (importante)</summary>
-        <div class="hint" style="margin-top:8px;">
-          Painel usa Hamiltoniano efetivo 2×2 (dois caracteres diabáticos com acoplamento V).
-          <span class="mono">Δmix</span> é o gap de autovalores.
-          <span class="mono">leak</span> é a fração de mistura <span class="mono">sin²φ</span>, monotônica com proximidade do corredor.
-          Se você fornecer <span class="mono">leak</span> do seu pipeline, ele prevalece; senão estimamos via 2×2.
-        </div>
-      </details>
-    </aside>
   </div>
 
-  <footer>
-    Site estático. Sem backend. Sem drama. (Mas com álgebra linear e 118 palpites determinísticos quando você não dá dados.)
-  </footer>
+  <div class="card panel">
+    <h2 id="selTitle">Selecione um elemento</h2>
+
+    <div class="row">
+      <div class="field">
+        <label>Δ (eV) — separação diabática</label>
+        <input id="inpDelta" type="number" step="0.001" placeholder="ex.: 0.50" />
+      </div>
+      <div class="field">
+        <label>V (eV) — hibridização efetiva</label>
+        <input id="inpV" type="number" step="0.001" placeholder="ex.: 0.20" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Nota (opcional)</label>
+      <textarea id="inpNote" rows="3" placeholder="ex.: s↔d, SOC, SC, etc."></textarea>
+    </div>
+
+    <div class="btns">
+      <button id="btnSave">Salvar (este elemento)</button>
+      <button id="btnClear">Limpar (este elemento)</button>
+      <button id="btnAutofill">Auto-preencher 118 (prior heurístico)</button>
+    </div>
+
+    <div class="kpi">
+      <div class="box">
+        <div class="t">R = |Δ|/|V|</div>
+        <div class="v mono" id="kpiR">—</div>
+      </div>
+      <div class="box">
+        <div class="t">sin²φ = ½(1 − Δ/√(Δ²+4V²))</div>
+        <div class="v mono" id="kpiSin2">—</div>
+      </div>
+      <div class="box">
+        <div class="t">Δmix = √(Δ²+4V²) (e no centro: 2|V|)</div>
+        <div class="v mono" id="kpiDmix">—</div>
+      </div>
+    </div>
+
+    <div class="small">
+      <b>Nota metodológica (sem misticismo):</b> o botão “auto” só coloca um <i>prior</i> coerente por bloco (s/p/d/f, SOC, SC),
+      porque o seu artigo diz explicitamente que Δ e V devem vir de espectroscopia / downfolding. Aqui a UI serve para
+      <i>materializar</i> os cálculos e o diagnóstico de regime. Se você quer valores reais por elemento, alimente Δ,V com seus dados.
+    </div>
+  </div>
+</div>
 
 <script>
-/* =========================
-   118 elementos com posições (grupo/período) + f-bloco
-   ========================= */
-
-const MAIN = [
-  {Z:1,sym:"H",name:"Hydrogen",period:1,group:1},
-  {Z:2,sym:"He",name:"Helium",period:1,group:18},
-  {Z:3,sym:"Li",name:"Lithium",period:2,group:1},
-  {Z:4,sym:"Be",name:"Beryllium",period:2,group:2},
-  {Z:5,sym:"B",name:"Boron",period:2,group:13},
-  {Z:6,sym:"C",name:"Carbon",period:2,group:14},
-  {Z:7,sym:"N",name:"Nitrogen",period:2,group:15},
-  {Z:8,sym:"O",name:"Oxygen",period:2,group:16},
-  {Z:9,sym:"F",name:"Fluorine",period:2,group:17},
-  {Z:10,sym:"Ne",name:"Neon",period:2,group:18},
-  {Z:11,sym:"Na",name:"Sodium",period:3,group:1},
-  {Z:12,sym:"Mg",name:"Magnesium",period:3,group:2},
-  {Z:13,sym:"Al",name:"Aluminum",period:3,group:13},
-  {Z:14,sym:"Si",name:"Silicon",period:3,group:14},
-  {Z:15,sym:"P",name:"Phosphorus",period:3,group:15},
-  {Z:16,sym:"S",name:"Sulfur",period:3,group:16},
-  {Z:17,sym:"Cl",name:"Chlorine",period:3,group:17},
-  {Z:18,sym:"Ar",name:"Argon",period:3,group:18},
-  {Z:19,sym:"K",name:"Potassium",period:4,group:1},
-  {Z:20,sym:"Ca",name:"Calcium",period:4,group:2},
-  {Z:21,sym:"Sc",name:"Scandium",period:4,group:3},
-  {Z:22,sym:"Ti",name:"Titanium",period:4,group:4},
-  {Z:23,sym:"V",name:"Vanadium",period:4,group:5},
-  {Z:24,sym:"Cr",name:"Chromium",period:4,group:6},
-  {Z:25,sym:"Mn",name:"Manganese",period:4,group:7},
-  {Z:26,sym:"Fe",name:"Iron",period:4,group:8},
-  {Z:27,sym:"Co",name:"Cobalt",period:4,group:9},
-  {Z:28,sym:"Ni",name:"Nickel",period:4,group:10},
-  {Z:29,sym:"Cu",name:"Copper",period:4,group:11},
-  {Z:30,sym:"Zn",name:"Zinc",period:4,group:12},
-  {Z:31,sym:"Ga",name:"Gallium",period:4,group:13},
-  {Z:32,sym:"Ge",name:"Germanium",period:4,group:14},
-  {Z:33,sym:"As",name:"Arsenic",period:4,group:15},
-  {Z:34,sym:"Se",name:"Selenium",period:4,group:16},
-  {Z:35,sym:"Br",name:"Bromine",period:4,group:17},
-  {Z:36,sym:"Kr",name:"Krypton",period:4,group:18},
-  {Z:37,sym:"Rb",name:"Rubidium",period:5,group:1},
-  {Z:38,sym:"Sr",name:"Strontium",period:5,group:2},
-  {Z:39,sym:"Y",name:"Yttrium",period:5,group:3},
-  {Z:40,sym:"Zr",name:"Zirconium",period:5,group:4},
-  {Z:41,sym:"Nb",name:"Niobium",period:5,group:5},
-  {Z:42,sym:"Mo",name:"Molybdenum",period:5,group:6},
-  {Z:43,sym:"Tc",name:"Technetium",period:5,group:7},
-  {Z:44,sym:"Ru",name:"Ruthenium",period:5,group:8},
-  {Z:45,sym:"Rh",name:"Rhodium",period:5,group:9},
-  {Z:46,sym:"Pd",name:"Palladium",period:5,group:10},
-  {Z:47,sym:"Ag",name:"Silver",period:5,group:11},
-  {Z:48,sym:"Cd",name:"Cadmium",period:5,group:12},
-  {Z:49,sym:"In",name:"Indium",period:5,group:13},
-  {Z:50,sym:"Sn",name:"Tin",period:5,group:14},
-  {Z:51,sym:"Sb",name:"Antimony",period:5,group:15},
-  {Z:52,sym:"Te",name:"Tellurium",period:5,group:16},
-  {Z:53,sym:"I",name:"Iodine",period:5,group:17},
-  {Z:54,sym:"Xe",name:"Xenon",period:5,group:18},
-  {Z:55,sym:"Cs",name:"Cesium",period:6,group:1},
-  {Z:56,sym:"Ba",name:"Barium",period:6,group:2},
-  {Z:57,sym:"La",name:"Lanthanum",period:6,group:3},
-  {Z:72,sym:"Hf",name:"Hafnium",period:6,group:4},
-  {Z:73,sym:"Ta",name:"Tantalum",period:6,group:5},
-  {Z:74,sym:"W",name:"Tungsten",period:6,group:6},
-  {Z:75,sym:"Re",name:"Rhenium",period:6,group:7},
-  {Z:76,sym:"Os",name:"Osmium",period:6,group:8},
-  {Z:77,sym:"Ir",name:"Iridium",period:6,group:9},
-  {Z:78,sym:"Pt",name:"Platinum",period:6,group:10},
-  {Z:79,sym:"Au",name:"Gold",period:6,group:11},
-  {Z:80,sym:"Hg",name:"Mercury",period:6,group:12},
-  {Z:81,sym:"Tl",name:"Thallium",period:6,group:13},
-  {Z:82,sym:"Pb",name:"Lead",period:6,group:14},
-  {Z:83,sym:"Bi",name:"Bismuth",period:6,group:15},
-  {Z:84,sym:"Po",name:"Polonium",period:6,group:16},
-  {Z:85,sym:"At",name:"Astatine",period:6,group:17},
-  {Z:86,sym:"Rn",name:"Radon",period:6,group:18},
-  {Z:87,sym:"Fr",name:"Francium",period:7,group:1},
-  {Z:88,sym:"Ra",name:"Radium",period:7,group:2},
-  {Z:89,sym:"Ac",name:"Actinium",period:7,group:3},
-  {Z:104,sym:"Rf",name:"Rutherfordium",period:7,group:4},
-  {Z:105,sym:"Db",name:"Dubnium",period:7,group:5},
-  {Z:106,sym:"Sg",name:"Seaborgium",period:7,group:6},
-  {Z:107,sym:"Bh",name:"Bohrium",period:7,group:7},
-  {Z:108,sym:"Hs",name:"Hassium",period:7,group:8},
-  {Z:109,sym:"Mt",name:"Meitnerium",period:7,group:9},
-  {Z:110,sym:"Ds",name:"Darmstadtium",period:7,group:10},
-  {Z:111,sym:"Rg",name:"Roentgenium",period:7,group:11},
-  {Z:112,sym:"Cn",name:"Copernicium",period:7,group:12},
-  {Z:113,sym:"Nh",name:"Nihonium",period:7,group:13},
-  {Z:114,sym:"Fl",name:"Flerovium",period:7,group:14},
-  {Z:115,sym:"Mc",name:"Moscovium",period:7,group:15},
-  {Z:116,sym:"Lv",name:"Livermorium",period:7,group:16},
-  {Z:117,sym:"Ts",name:"Tennessine",period:7,group:17},
-  {Z:118,sym:"Og",name:"Oganesson",period:7,group:18},
+/* =========================================================
+   1) Layout (posição period/group) — simples e suficiente
+   ========================================================= */
+const ELEMENTS = [
+  // sym, Z, period, group
+  ["H",1,1,1], ["He",2,1,18],
+  ["Li",3,2,1],["Be",4,2,2],["B",5,2,13],["C",6,2,14],["N",7,2,15],["O",8,2,16],["F",9,2,17],["Ne",10,2,18],
+  ["Na",11,3,1],["Mg",12,3,2],["Al",13,3,13],["Si",14,3,14],["P",15,3,15],["S",16,3,16],["Cl",17,3,17],["Ar",18,3,18],
+  ["K",19,4,1],["Ca",20,4,2],["Sc",21,4,3],["Ti",22,4,4],["V",23,4,5],["Cr",24,4,6],["Mn",25,4,7],["Fe",26,4,8],["Co",27,4,9],["Ni",28,4,10],["Cu",29,4,11],["Zn",30,4,12],
+  ["Ga",31,4,13],["Ge",32,4,14],["As",33,4,15],["Se",34,4,16],["Br",35,4,17],["Kr",36,4,18],
+  ["Rb",37,5,1],["Sr",38,5,2],["Y",39,5,3],["Zr",40,5,4],["Nb",41,5,5],["Mo",42,5,6],["Tc",43,5,7],["Ru",44,5,8],["Rh",45,5,9],["Pd",46,5,10],["Ag",47,5,11],["Cd",48,5,12],
+  ["In",49,5,13],["Sn",50,5,14],["Sb",51,5,15],["Te",52,5,16],["I",53,5,17],["Xe",54,5,18],
+  ["Cs",55,6,1],["Ba",56,6,2],
+  ["La",57,6,3],["Hf",72,6,4],["Ta",73,6,5],["W",74,6,6],["Re",75,6,7],["Os",76,6,8],["Ir",77,6,9],["Pt",78,6,10],["Au",79,6,11],["Hg",80,6,12],
+  ["Tl",81,6,13],["Pb",82,6,14],["Bi",83,6,15],["Po",84,6,16],["At",85,6,17],["Rn",86,6,18],
+  ["Fr",87,7,1],["Ra",88,7,2],
+  ["Ac",89,7,3],["Rf",104,7,4],["Db",105,7,5],["Sg",106,7,6],["Bh",107,7,7],["Hs",108,7,8],["Mt",109,7,9],["Ds",110,7,10],["Rg",111,7,11],["Cn",112,7,12],
+  ["Nh",113,7,13],["Fl",114,7,14],["Mc",115,7,15],["Lv",116,7,16],["Ts",117,7,17],["Og",118,7,18],
 ];
 
+// Lantanídeos e actinídeos (linhas separadas) — para mostrar sem bagunçar o grid principal
 const LANTH = [
-  {Z:58,sym:"Ce",name:"Cerium"},
-  {Z:59,sym:"Pr",name:"Praseodymium"},
-  {Z:60,sym:"Nd",name:"Neodymium"},
-  {Z:61,sym:"Pm",name:"Promethium"},
-  {Z:62,sym:"Sm",name:"Samarium"},
-  {Z:63,sym:"Eu",name:"Europium"},
-  {Z:64,sym:"Gd",name:"Gadolinium"},
-  {Z:65,sym:"Tb",name:"Terbium"},
-  {Z:66,sym:"Dy",name:"Dysprosium"},
-  {Z:67,sym:"Ho",name:"Holmium"},
-  {Z:68,sym:"Er",name:"Erbium"},
-  {Z:69,sym:"Tm",name:"Thulium"},
-  {Z:70,sym:"Yb",name:"Ytterbium"},
-  {Z:71,sym:"Lu",name:"Lutetium"},
+  ["Ce",58],["Pr",59],["Nd",60],["Pm",61],["Sm",62],["Eu",63],["Gd",64],["Tb",65],["Dy",66],["Ho",67],["Er",68],["Tm",69],["Yb",70],["Lu",71]
 ];
-
 const ACT = [
-  {Z:90,sym:"Th",name:"Thorium"},
-  {Z:91,sym:"Pa",name:"Protactinium"},
-  {Z:92,sym:"U",name:"Uranium"},
-  {Z:93,sym:"Np",name:"Neptunium"},
-  {Z:94,sym:"Pu",name:"Plutonium"},
-  {Z:95,sym:"Am",name:"Americium"},
-  {Z:96,sym:"Cm",name:"Curium"},
-  {Z:97,sym:"Bk",name:"Berkelium"},
-  {Z:98,sym:"Cf",name:"Californium"},
-  {Z:99,sym:"Es",name:"Einsteinium"},
-  {Z:100,sym:"Fm",name:"Fermium"},
-  {Z:101,sym:"Md",name:"Mendelevium"},
-  {Z:102,sym:"No",name:"Nobelium"},
-  {Z:103,sym:"Lr",name:"Lawrencium"},
+  ["Th",90],["Pa",91],["U",92],["Np",93],["Pu",94],["Am",95],["Cm",96],["Bk",97],["Cf",98],["Es",99],["Fm",100],["Md",101],["No",102],["Lr",103]
 ];
 
-const ALLMETA = (() => {
-  const m = new Map();
-  for (const e of MAIN) m.set(e.sym, e);
-  for (const e of LANTH) m.set(e.sym, { ...e, period: 6, group: null, block: "f", series:"Lanthanides" });
-  for (const e of ACT) m.set(e.sym, { ...e, period: 7, group: null, block: "f", series:"Actinides" });
-  return m;
-})();
+const ALLSYMS = new Set([...ELEMENTS.map(x=>x[0]), ...LANTH.map(x=>x[0]), ...ACT.map(x=>x[0])]);
 
-/* =========================
-   Entrada (do usuário) e derivados (sempre 118)
-   ========================= */
-let CORRIDOR = {};          // entrada: {delta, v, leak?, comment?, _src?}
-let DERIVED = {};           // sempre completo: {delta, v, R, leak, dmix, regime, src}
+/* =========================================================
+   2) Dados editáveis: CORRIDOR (entrada) e DERIVED (cálculo)
+   ========================================================= */
+const CORRIDOR = {};  // {sym:{delta,v,note,_src}}
+const DERIVED  = {};  // {sym:{R,sin2,dmix,delta,v}}
 
-/* =========================
-   Física 2×2 e utilidades
-   ========================= */
-function fmt(x, digits=3){
-  if (x === null || x === undefined || Number.isNaN(x)) return "—";
-  return Number(x).toFixed(digits);
-}
-function regimeFromR(R){
-  if (!isFinite(R)) return "—";
-  if (R >= 3) return "Estável (R ≥ 3)";
-  if (R >= 1) return "Intermediário (1 ≤ R < 3)";
-  return "Corredor/competição (R < 1)";
-}
-function dmix(delta, v){
-  if (!isFinite(delta) || !isFinite(v)) return NaN;
-  return Math.sqrt(delta*delta + 4*v*v);
-}
-function leakFrom2x2(delta, v){
-  // leak = sin^2 φ = 1/2 (1 - |Δ|/sqrt(Δ^2 + 4V^2))
-  if (!isFinite(delta) || !isFinite(v)) return NaN;
-  const D = Math.abs(delta);
-  const denom = Math.sqrt(delta*delta + 4*v*v);
-  if (!(denom > 0)) return NaN;
-  return 0.5*(1 - D/denom);
+let SELECTED = null;
+
+/* =========================================================
+   3) Fórmulas do seu artigo (modelo 2×2)
+   ========================================================= */
+function computeDerived(delta, v){
+  const D = Number(delta);
+  const V = Number(v);
+  if (!isFinite(D) || !isFinite(V) || Math.abs(V) === 0) return null;
+
+  const dmix = Math.sqrt(D*D + 4*V*V);                       // Eq. adiabatic_gap_student
+  const R    = Math.abs(D) / Math.abs(V);                   // Eq. R_and_leakage
+  const sin2 = 0.5 * (1 - (D / dmix));                      // Eq. mixing_angle_student  (sin^2 φ)
+  return { delta:D, v:V, dmix, R, sin2 };
 }
 
-/* =========================
-   Heurística determinística para preencher Δ,V quando faltam
-   (prior simples: bloco+período+Z e “suspeitos” d/f)
-   ========================= */
-const SUSPECT = new Set([
-  "Cr","Cu","Nb","Mo","Ru","Rh","Pd","Ag","Pt","Au", // anomalias/competição clássica
-  "Ce","Eu","Yb","Th","U","Pu"                      // f-bloco: degenerescências/valência
-]);
-
-function inferBlock(meta){
-  if (meta.block === "f") return "f";
-  const g = meta.group;
-  if (g === null || g === undefined) return "x";
+/* =========================================================
+   4) Prior heurístico (só para preencher algo coerente)
+      — NÃO substitui espectroscopia / downfolding.
+   ========================================================= */
+function blockOf(sym){
+  // classificação grosseira por posição e "família"
+  const Z = ZMAP[sym];
+  if (!Z) return "x";
+  if (Z >= 57 && Z <= 71) return "f";
+  if (Z >= 89 && Z <= 103) return "f";
+  const e = META[sym];
+  if (!e) return "x";
+  const g = e.group;
+  if (g >= 3 && g <= 12) return "d";
+  if (g >= 13 && g <= 18) return "p";
   if (g <= 2) return "s";
-  if (g >= 13) return "p";
-  return "d";
+  return "x";
 }
 
-function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)); }
-
+// Heurística simples em eV: f mais denso → Δ menor, V moderado;
+// 5d e pesados → V maior (SOC/covalência); SC em 3d intermediário.
 function estimateDeltaV(sym){
-  const meta = ALLMETA.get(sym);
-  const Z = meta?.Z ?? 0;
-  const p = meta?.period ?? 1;
-  const block = inferBlock(meta || {});
-  // escalas “de ordem de grandeza” (eV), só para preencher painel
-  const base = {
-    s: { delta: 1.20, v: 0.06 },
-    p: { delta: 1.00, v: 0.07 },
-    d: { delta: 0.55, v: 0.14 },
-    f: { delta: 0.35, v: 0.18 },
-    x: { delta: 0.80, v: 0.10 }
-  }[block];
+  const Z = ZMAP[sym] || 0;
+  const b = blockOf(sym);
+  const e = META[sym];
+  const period = e?.period ?? 0;
+  const group  = e?.group ?? 0;
 
-  // tendência suave com Z (cresce SOC e hibridização efetiva) + período (camadas)
-  const zfac = 1 + 0.0025*(Z - 1);
-  const pfacD = 1 + 0.08*(p - 1);
-  const pfacV = 1 + 0.04*(p - 1);
+  let delta, v, note;
 
-  // “corredor-prior”: suspeitos têm Δ menor e V ligeiramente maior
-  const sFacD = SUSPECT.has(sym) ? 0.55 : 1.0;
-  const sFacV = SUSPECT.has(sym) ? 1.25 : 1.0;
-
-  // d10 (grupo 10-12) tende a competição s/d e reorganizações: baixa Δ
-  const g = meta?.group ?? 0;
-  const d10Fac = (block === "d" && g >= 10 && g <= 12) ? 0.78 : 1.0;
-
-  // gás nobre: Δ grande, V pequeno (quase ninguém “brinca” com ele)
-  const noble = new Set(["He","Ne","Ar","Kr","Xe","Rn","Og"]);
-  const nobleD = noble.has(sym) ? 1.9 : 1.0;
-  const nobleV = noble.has(sym) ? 0.55 : 1.0;
-
-  // resultado
-  let delta = base.delta * zfac * pfacD * sFacD * d10Fac * nobleD;
-  let v     = base.v     * zfac * pfacV * sFacV * nobleV;
-
-  // limites pragmáticos (evita lixo numérico na UI)
-  delta = clamp(delta, 0.03, 3.0);
-  v     = clamp(v,     0.01, 0.60);
-
-  return { delta, v, src: "auto" };
-}
-
-/* =========================
-   Construir DERIVED para TODOS os 118
-   ========================= */
-function recomputeAllDerived(){
-  DERIVED = {};
-  for (const sym of ALLMETA.keys()){
-    const user = CORRIDOR[sym] || {};
-    let delta = (user.delta !== undefined && isFinite(Number(user.delta))) ? Number(user.delta) : NaN;
-    let v     = (user.v     !== undefined && isFinite(Number(user.v)))     ? Number(user.v)     : NaN;
-
-    let src = "auto";
-    if (isFinite(delta) && isFinite(v)) src = "user";
-    else {
-      const est = estimateDeltaV(sym);
-      if (!isFinite(delta)) delta = est.delta;
-      if (!isFinite(v))     v     = est.v;
-      src = (user.delta !== undefined || user.v !== undefined) ? "misto" : "auto";
-    }
-
-    const R  = (isFinite(delta) && isFinite(v) && Math.abs(v) > 0) ? Math.abs(delta)/Math.abs(v) : NaN;
-    const dm = (isFinite(delta) && isFinite(v)) ? dmix(delta, v) : NaN;
-
-    let leak = (user.leak !== undefined && user.leak !== null && user.leak !== "" && isFinite(Number(user.leak)))
-      ? Number(user.leak)
-      : leakFrom2x2(delta, v);
-
-    DERIVED[sym] = {
-      delta, v, R,
-      dmix: dm,
-      leak,
-      regime: regimeFromR(R),
-      src,
-      comment: (user.comment !== undefined) ? String(user.comment) : null
-    };
+  if (b === "s"){
+    delta = 1.2 + 0.15*period;           // grandes separações típicas
+    v     = 0.10 + 0.02*period;
+    note  = "s (estável)";
+  } else if (b === "p"){
+    delta = 0.9 + 0.10*period;
+    v     = 0.12 + 0.03*period;
+    if (Z >= 49) { v += 0.08; note = "p + SOC (pesado)"; }
+    else note = "p";
+  } else if (b === "d"){
+    // d: mais perto do corredor, especialmente tardios (s↔d e d↔d)
+    const late = (group >= 9 && group <= 12);
+    delta = late ? (0.35 + 0.05*(6-period)) : (0.60 + 0.06*(6-period));
+    v     = late ? (0.22 + 0.03*period) : (0.18 + 0.02*period);
+    note  = late ? "d (tardio): s↔d/d↔d" : "d: d↔d";
+    if (period >= 6) { v += 0.12; note += " + SOC"; } // 5d
+    // SC "provável" (regra tosca): Fe/Co/Ni/ Mn região
+    if (["Mn","Fe","Co","Ni"].includes(sym)) note += " + SC?";
+  } else if (b === "f"){
+    delta = 0.20 + 0.02*period;          // multipletos densos
+    v     = 0.18 + 0.03*period;          // mistura efetiva relevante
+    note  = "f/rel (multipletos densos)";
+  } else {
+    delta = 0.8; v = 0.15; note = "prior";
   }
+
+  // clamp razoável (só para não gerar lixo)
+  delta = Math.max(0.05, Math.min(delta, 2.50));
+  v     = Math.max(0.03, Math.min(v,     0.80));
+
+  return { delta: Number(delta.toFixed(3)), v: Number(v.toFixed(3)), note };
 }
 
-/* =========================
-   Renderização da tabela
-   ========================= */
-const grid = document.getElementById("pt-grid");
-
-function cell(sym, Z, name){
-  const div = document.createElement("div");
-  div.className = "el";
-  div.dataset.sym = sym;
-  div.innerHTML = `<div class="sym">${sym}</div><div class="z">${Z}</div><div class="name">${name}</div>`;
-  div.addEventListener("click", () => selectElement(sym));
-  return div;
+/* =========================================================
+   5) Montagem do grid + interação
+   ========================================================= */
+const META = {};   // sym -> {Z,period,group}
+const ZMAP = {};   // sym -> Z
+for (const [sym,Z,period,group] of ELEMENTS){
+  META[sym] = {Z,period,group};
+  ZMAP[sym] = Z;
 }
+for (const [sym,Z] of LANTH){ META[sym] = {Z,period:6,group:3}; ZMAP[sym]=Z; }
+for (const [sym,Z] of ACT){   META[sym] = {Z,period:7,group:3}; ZMAP[sym]=Z; }
 
-function makeMainGrid(){
-  const index = new Map();
-  for (const e of MAIN) index.set(`${e.period}-${e.group}`, e);
+function makeGrid(){
+  const pt = document.getElementById("pt");
+  pt.innerHTML = "";
 
-  for (let p=1; p<=7; p++){
-    for (let g=1; g<=18; g++){
-      const key = `${p}-${g}`;
-      const e = index.get(key);
-      const div = document.createElement("div");
-      div.style.gridRow = p;
-      div.style.gridColumn = g;
-
-      if (!e){
-        div.style.visibility = "hidden";
-        div.textContent = ".";
-        grid.appendChild(div);
-      } else {
-        const c = cell(e.sym, e.Z, e.name);
-        c.style.gridRow = p;
-        c.style.gridColumn = g;
-        grid.appendChild(c);
+  // grid 7 períodos x 18 grupos, mas usando CSS grid por 18 colunas; colocamos por ordem
+  // Para deixar bonitinho: inserimos "buracos" usando elementos vazios
+  const byPos = new Map();
+  for (const [sym,Z,period,group] of ELEMENTS){
+    byPos.set(`${period}-${group}`, sym);
+  }
+  for (let period=1; period<=7; period++){
+    for (let group=1; group<=18; group++){
+      const sym = byPos.get(`${period}-${group}`);
+      if (!sym){
+        const ghost = document.createElement("div");
+        ghost.style.height = "46px";
+        ghost.style.border = "1px dashed rgba(255,255,255,.05)";
+        ghost.style.borderRadius = "10px";
+        ghost.style.background = "transparent";
+        pt.appendChild(ghost);
+        continue;
       }
+      pt.appendChild(makeCell(sym));
     }
   }
+
+  // adicionar uma “linha” visual para Ln/An (simples)
+  const spacer = document.createElement("div");
+  spacer.style.gridColumn = "1 / span 18";
+  spacer.style.height = "8px";
+  pt.appendChild(spacer);
+
+  const lnLabel = document.createElement("div");
+  lnLabel.textContent = "Ln";
+  lnLabel.className = "cell";
+  lnLabel.style.cursor = "default";
+  lnLabel.innerHTML = `<div class="sym">Ln</div><div class="mini">57–71</div>`;
+  pt.appendChild(lnLabel);
+
+  for (const [sym] of LANTH) pt.appendChild(makeCell(sym));
+
+  const anLabel = document.createElement("div");
+  anLabel.textContent = "An";
+  anLabel.className = "cell";
+  anLabel.style.cursor = "default";
+  anLabel.innerHTML = `<div class="sym">An</div><div class="mini">89–103</div>`;
+  pt.appendChild(anLabel);
+
+  for (const [sym] of ACT) pt.appendChild(makeCell(sym));
+
+  refreshCellClasses();
+  updateStatline();
 }
 
-function addSeries(label, arr, rowStart){
-  const lab = document.createElement("div");
-  lab.className = "rowlabel";
-  lab.textContent = label;
-  lab.style.gridRow = rowStart;
-  grid.appendChild(lab);
-
-  const startCol = 3;
-  for (let i=0; i<18; i++){
-    const col = i+1;
-    const spot = document.createElement("div");
-    spot.style.gridRow = rowStart+1;
-    spot.style.gridColumn = col;
-
-    const j = col - startCol;
-    if (j >= 0 && j < arr.length){
-      const e = arr[j];
-      const c = cell(e.sym, e.Z, e.name);
-      c.style.gridRow = rowStart+1;
-      c.style.gridColumn = col;
-      grid.appendChild(c);
-    } else {
-      spot.style.visibility = "hidden";
-      spot.textContent = ".";
-      grid.appendChild(spot);
-    }
-  }
+function makeCell(sym){
+  const el = document.createElement("div");
+  el.className = "cell";
+  el.dataset.sym = sym;
+  el.innerHTML = `<div class="sym">${sym}</div><div class="mini mono" id="mini-${sym}">Δ,V: —</div>`;
+  el.addEventListener("click", ()=> select(sym));
+  return el;
 }
 
 function refreshCellClasses(){
-  document.querySelectorAll(".el").forEach(el => {
+  document.querySelectorAll(".cell").forEach(el=>{
     const sym = el.dataset.sym;
+    if (!sym || !ALLSYMS.has(sym)) return;
+
+    el.classList.remove("filled","r_ok","r_mid","r_bad");
+
     const inp = CORRIDOR[sym];
     const der = DERIVED[sym];
 
-    el.classList.remove("filled","warn","r_ok","r_mid","r_bad");
+    const has = der && isFinite(der.delta) && isFinite(der.v) && Math.abs(der.v)>0;
+    if (has) el.classList.add("filled");
 
-    // marca “tem entrada”
-    if (inp){
-      const hasDelta = isFinite(inp.delta);
-      const hasV = isFinite(inp.v) && Math.abs(inp.v) > 0;
-      if (hasDelta && hasV) el.classList.add("filled");
-      else el.classList.add("warn");
-    }
-
-    // colore por regime (sempre existe em DERIVED)
     if (der && isFinite(der.R)){
       if (der.R >= 3) el.classList.add("r_ok");
       else if (der.R >= 1) el.classList.add("r_mid");
       else el.classList.add("r_bad");
     }
+
+    const mini = document.getElementById(`mini-${sym}`);
+    if (mini){
+      if (has){
+        mini.textContent = `Δ=${der.delta.toFixed(2)} V=${der.v.toFixed(2)} | R=${der.R.toFixed(2)}`;
+      } else {
+        mini.textContent = "Δ,V: —";
+      }
+    }
   });
 }
 
-function makeGrid(){
-  grid.innerHTML = "";
-  makeMainGrid();
-  addSeries("Lantanídeos (La–Lu)", LANTH, 9);
-  addSeries("Actinídeos (Ac–Lr)", ACT, 11);
-  refreshCellClasses();
-}
-
-/* =========================
-   Seleção e painel
-   ========================= */
-function selectElement(sym){
-  document.querySelectorAll(".el").forEach(x => x.classList.toggle("sel", x.dataset.sym === sym));
-
-  const meta = ALLMETA.get(sym);
-  const d = DERIVED[sym] || {};
-  const user = CORRIDOR[sym] || {};
-
-  const delta = (d.delta !== undefined) ? Number(d.delta) : NaN;
-  const v     = (d.v     !== undefined) ? Number(d.v)     : NaN;
-
-  const R  = (d.R    !== undefined) ? Number(d.R)    : NaN;
-  const dm = (d.dmix !== undefined) ? Number(d.dmix) : NaN;
-  const leak = (d.leak !== undefined) ? Number(d.leak) : NaN;
-
-  document.getElementById("sel-hint").textContent =
-    `${sym} — ${meta ? meta.name : ""} (Z=${meta ? meta.Z : "?"})`;
-
-  document.getElementById("out-delta").textContent = isFinite(delta) ? fmt(delta) : "—";
-  document.getElementById("out-v").textContent     = isFinite(v)     ? fmt(v)     : "—";
-  document.getElementById("out-r").textContent     = isFinite(R)     ? fmt(R)     : "—";
-  document.getElementById("out-leak").textContent  = isFinite(leak)  ? fmt(leak)  : "—";
-
-  document.getElementById("out-dmix").textContent  = isFinite(dm) ? fmt(dm) : "—";
-  document.getElementById("out-reg").textContent   = d.regime || "—";
-  document.getElementById("out-cmt").textContent   = (user.comment || d.comment) || "—";
-  document.getElementById("out-src").textContent   = (d.src === "user") ? "fornecido (user)"
-                                            : (d.src === "misto") ? "misto (user+auto)"
-                                            : "auto (heurístico)";
-
-  const raw = {
-    symbol: sym,
-    ...(meta ? meta : {}),
-    input: (CORRIDOR[sym] ? { ...CORRIDOR[sym] } : null),
-    derived: {
-      delta_eV: isFinite(delta) ? delta : null,
-      v_eV:     isFinite(v)     ? v     : null,
-      R:        isFinite(R)     ? R     : null,
-      leakage:  isFinite(leak)  ? leak  : null,
-      deltaMix_eV: isFinite(dm) ? dm : null,
-      regime: d.regime || null,
-      src: d.src || null,
-      comment: (user.comment || d.comment) || null
-    }
-  };
-  document.getElementById("raw").value = JSON.stringify(raw, null, 2);
-}
-
-/* =========================
-   Import: CSV ou JSON
-   ========================= */
-function parseMaybeJSON(txt){
-  const t = txt.trim();
-  if (!t) return null;
-  if (t.startsWith("{") || t.startsWith("[")) return JSON.parse(t);
-  return null;
-}
-
-function parseCSV(txt){
-  const lines = txt.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
-  if (lines.length === 0) return {};
-  let start = 0;
-  const head = lines[0].toLowerCase();
-  const hasHeader = head.includes("symbol") || head.includes("delta") || head.includes("leak");
-  if (hasHeader) start = 1;
-
-  const out = {};
-  for (let i=start; i<lines.length; i++){
-    const parts = lines[i].split(",").map(s => s.trim());
-    if (parts.length < 3) continue;
-
-    const symbol = parts[0];
-    if (!ALLMETA.has(symbol)) continue;
-
-    const delta = parts[1] !== "" ? Number(parts[1]) : NaN;
-    const v     = parts[2] !== "" ? Number(parts[2]) : NaN;
-    const leak  = (parts[3] !== undefined && parts[3] !== "") ? Number(parts[3]) : undefined;
-    const comment = (parts[4] !== undefined && parts.slice(4).join(",").trim() !== "") ? parts.slice(4).join(",").trim() : undefined;
-
-    const d = {};
-    if (isFinite(delta)) d.delta = delta;
-    if (isFinite(v))     d.v = v;
-    if (isFinite(leak))  d.leak = leak;
-    if (comment !== undefined) d.comment = comment;
-    out[symbol] = d;
+function recomputeAllDerived(){
+  for (const sym of ALLSYMS){
+    const inp = CORRIDOR[sym];
+    if (!inp){ delete DERIVED[sym]; continue; }
+    const d = computeDerived(inp.delta, inp.v);
+    if (!d){ delete DERIVED[sym]; continue; }
+    DERIVED[sym] = d;
   }
-  return out;
-}
-
-function normalizeJSON(obj){
-  const out = {};
-  if (Array.isArray(obj)){
-    for (const row of obj){
-      if (!row) continue;
-      const symbol = row.symbol || row.sym;
-      if (!symbol || !ALLMETA.has(symbol)) continue;
-      const d = {};
-      if (row.delta !== undefined && isFinite(Number(row.delta))) d.delta = Number(row.delta);
-      if (row.v !== undefined && isFinite(Number(row.v))) d.v = Number(row.v);
-      if (row.leak !== undefined && isFinite(Number(row.leak))) d.leak = Number(row.leak);
-      if (row.comment !== undefined) d.comment = String(row.comment);
-      out[symbol] = d;
-    }
-    return out;
-  }
-  if (obj && typeof obj === "object"){
-    for (const [symbol, val] of Object.entries(obj)){
-      if (!ALLMETA.has(symbol)) continue;
-      const row = val || {};
-      const d = {};
-      if (row.delta !== undefined && isFinite(Number(row.delta))) d.delta = Number(row.delta);
-      if (row.v !== undefined && isFinite(Number(row.v))) d.v = Number(row.v);
-      if (row.leak !== undefined && isFinite(Number(row.leak))) d.leak = Number(row.leak);
-      if (row.comment !== undefined) d.comment = String(row.comment);
-      out[symbol] = d;
-    }
-    return out;
-  }
-  return {};
-}
-
-/* =========================
-   Estatísticas e export
-   ========================= */
-function stats(){
-  const syms = Array.from(ALLMETA.keys());
-  let nAny=0, nComplete=0, nBad=0, nAuto=0, nUser=0, nMix=0;
-  let nRok=0, nRmid=0, nRbad=0;
-
-  for (const s of syms){
-    const inp = CORRIDOR[s];
-    if (inp) nAny++;
-    if (inp){
-      const ok = isFinite(inp.delta) && isFinite(inp.v) && Math.abs(inp.v) > 0;
-      if (ok) nComplete++; else nBad++;
-    }
-
-    const der = DERIVED[s];
-    if (der){
-      if (der.src === "auto") nAuto++;
-      else if (der.src === "user") nUser++;
-      else if (der.src === "misto") nMix++;
-
-      if (isFinite(der.R)){
-        if (der.R >= 3) nRok++;
-        else if (der.R >= 1) nRmid++;
-        else nRbad++;
-      }
-    }
-  }
-  return { total: syms.length, nAny, nComplete, nBad, nAuto, nUser, nMix, nRok, nRmid, nRbad };
 }
 
 function updateStatline(){
-  const s = stats();
-  const el = document.getElementById("statline");
-  el.innerHTML =
-    `Elementos: <span class="mono">${s.total}</span> • ` +
-    `com alguma entrada: <span class="mono">${s.nAny}</span> • ` +
-    `entrada com (Δ,V) válidos: <span class="mono good">${s.nComplete}</span> • ` +
-    `entrada incompleta: <span class="mono bad">${s.nBad}</span><br/>` +
-    `origem (Δ,V): user=<span class="mono good">${s.nUser}</span>, misto=<span class="mono mid">${s.nMix}</span>, auto=<span class="mono">${s.nAuto}</span> • ` +
-    `regimes: estável=<span class="mono good">${s.nRok}</span>, interm=<span class="mono mid">${s.nRmid}</span>, corredor=<span class="mono bad">${s.nRbad}</span>`;
+  let n=0, ok=0, mid=0, bad=0;
+  for (const sym of ALLSYMS){
+    const d = DERIVED[sym];
+    if (!d || !isFinite(d.R)) continue;
+    n++;
+    if (d.R >= 3) ok++;
+    else if (d.R >= 1) mid++;
+    else bad++;
+  }
+  document.getElementById("statline").innerHTML =
+    `<b>Status:</b> elementos com Δ,V válidos: <span class="mono">${n}</span> · robusto: <span class="mono">${ok}</span> · transição: <span class="mono">${mid}</span> · corredor: <span class="mono">${bad}</span>`;
 }
 
-async function copyOrDump(txt){
-  try {
-    await navigator.clipboard.writeText(txt);
-    alert("COPIADO para a área de transferência.");
-  } catch(e){
-    document.getElementById("in-data").value = txt;
-    alert("Sem acesso ao clipboard. Coloquei no textarea para copiar manualmente.");
-  }
+/* =========================================================
+   6) Painel lateral
+   ========================================================= */
+function select(sym){
+  SELECTED = sym;
+  document.getElementById("selTitle").textContent = `Elemento: ${sym} (Z=${ZMAP[sym] ?? "?"})`;
+
+  const inp = CORRIDOR[sym] || {};
+  document.getElementById("inpDelta").value = (inp.delta ?? "");
+  document.getElementById("inpV").value     = (inp.v ?? "");
+  document.getElementById("inpNote").value  = (inp.note ?? "");
+
+  updateKPIs(sym);
 }
 
-/* =========================
-   Botões
-   ========================= */
-document.getElementById("btn-apply").addEventListener("click", () => {
-  const txt = document.getElementById("in-data").value;
-  let obj = null;
-  try { obj = parseMaybeJSON(txt); } catch(e){ obj = null; }
+function updateKPIs(sym){
+  const d = DERIVED[sym];
+  document.getElementById("kpiR").textContent     = d ? d.R.toFixed(6) : "—";
+  document.getElementById("kpiSin2").textContent  = d ? d.sin2.toFixed(6) : "—";
+  document.getElementById("kpiDmix").textContent  = d ? d.dmix.toFixed(6) : "—";
+}
 
-  let parsed = {};
-  try {
-    if (obj !== null) parsed = normalizeJSON(obj);
-    else parsed = parseCSV(txt);
-  } catch(e){
-    alert("Falha ao parsear dados. JSON: verifique aspas/vírgulas. CSV: separador é vírgula.");
-    return;
-  }
+document.getElementById("btnSave").addEventListener("click", ()=>{
+  if (!SELECTED) return alert("Selecione um elemento.");
+  const delta = document.getElementById("inpDelta").value;
+  const v     = document.getElementById("inpV").value;
+  const note  = document.getElementById("inpNote").value;
 
-  // merge: só toca nos símbolos colados
-  for (const [k,v] of Object.entries(parsed)){
-    CORRIDOR[k] = { ...(CORRIDOR[k]||{}), ...v };
-  }
-
-  recomputeAllDerived();
-  refreshCellClasses();
-  updateStatline();
-});
-
-document.getElementById("btn-autofill").addEventListener("click", () => {
-  // garante que DERIVED tem 118 (sempre) — e opcionalmente grava em CORRIDOR os auto-estimados faltantes
-  for (const sym of ALLMETA.keys()){
-    if (!CORRIDOR[sym]) CORRIDOR[sym] = {}; // cria “slot” vazio para existir na entrada, se quiser
-    // não escreve delta/v aqui: mantém como “sem entrada” (para você distinguir), mas DERIVED sempre terá.
-  }
-  recomputeAllDerived();
-  refreshCellClasses();
-  updateStatline();
-  alert("Auto-estima ativada: todos os 118 têm (Δ,V,R,Δmix,leak) em DERIVED. Cole seus dados reais quando quiser sobrescrever.");
-});
-
-document.getElementById("btn-export").addEventListener("click", async () => {
-  const payload = {
-    version: "corridor-table+derived.v1",
-    timestamp_iso: new Date().toISOString(),
-    notes: "export contém input (CORRIDOR) e derivados (DERIVED) para os 118.",
-    input_CORRIDOR: CORRIDOR,
-    derived_ALL: DERIVED
+  CORRIDOR[SELECTED] = {
+    delta: delta === "" ? undefined : Number(delta),
+    v:     v     === "" ? undefined : Number(v),
+    note:  note ?? "",
+    _src:  "user"
   };
-  await copyOrDump(JSON.stringify(payload, null, 2));
-});
 
-document.getElementById("btn-export-raw").addEventListener("click", async () => {
-  await copyOrDump(JSON.stringify(CORRIDOR, null, 2));
-});
-
-document.getElementById("btn-clear").addEventListener("click", () => {
-  CORRIDOR = {};
   recomputeAllDerived();
   refreshCellClasses();
   updateStatline();
-  document.getElementById("in-data").value = "";
-  document.getElementById("raw").value = "";
-  document.getElementById("sel-hint").textContent = "Clique em um símbolo na tabela.";
-  ["out-delta","out-v","out-r","out-leak","out-reg","out-dmix","out-cmt","out-src"].forEach(id => {
-    document.getElementById(id).textContent = "—";
-  });
+  updateKPIs(SELECTED);
 });
 
-document.getElementById("btn-demo").addEventListener("click", () => {
-  const demo = [
-    {symbol:"Pd", delta:0.12, v:0.18, comment:"demo: corredor forte"},
-    {symbol:"Ni", delta:0.55, v:0.10, comment:"demo: mais estável"},
-    {symbol:"Fe", delta:0.22, v:0.20, comment:"demo: intermediário"},
-    {symbol:"Au", delta:0.08, v:0.12, comment:"demo: SOC/mistura provável"},
-    {symbol:"U",  delta:0.10, v:0.25, comment:"demo: f-bloco brincando de mágica"},
-  ];
-  document.getElementById("in-data").value = JSON.stringify(demo, null, 2);
+document.getElementById("btnClear").addEventListener("click", ()=>{
+  if (!SELECTED) return alert("Selecione um elemento.");
+  delete CORRIDOR[SELECTED];
+  delete DERIVED[SELECTED];
+  document.getElementById("inpDelta").value = "";
+  document.getElementById("inpV").value     = "";
+  document.getElementById("inpNote").value  = "";
+  refreshCellClasses();
+  updateStatline();
+  updateKPIs(SELECTED);
 });
 
-/* =========================
-   Boot
-   ========================= */
-recomputeAllDerived();
+document.getElementById("btnAutofill").addEventListener("click", ()=>{
+  for (const sym of ALLSYMS){
+    const cur = CORRIDOR[sym] || {};
+    const needDelta = !(cur.delta !== undefined && isFinite(Number(cur.delta)));
+    const needV     = !(cur.v     !== undefined && isFinite(Number(cur.v)));
+    if (needDelta || needV){
+      const est = estimateDeltaV(sym);
+      CORRIDOR[sym] = {
+        ...cur,
+        delta: needDelta ? est.delta : Number(cur.delta),
+        v:     needV     ? est.v     : Number(cur.v),
+        note:  (cur.note ?? "") || est.note,
+        _src:  "auto"
+      };
+    } else {
+      CORRIDOR[sym] = { ...cur, _src: cur._src ?? "user" };
+    }
+  }
+  recomputeAllDerived();
+  refreshCellClasses();
+  updateStatline();
+  if (SELECTED) updateKPIs(SELECTED);
+  alert("Auto-preenchido: Δ,V para 118 (não sobrescreve o que você já digitou).");
+});
+
+/* =========================================================
+   7) Boot
+   ========================================================= */
 makeGrid();
-updateStatline();
+select("Fe"); // abre já num elemento sensível (por motivos óbvios)
 </script>
+
 </body>
 </html>
 
