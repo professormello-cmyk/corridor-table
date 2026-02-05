@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Corridor Table</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="top">
+    <h1>corridor-table</h1>
+    <p>Tabela periódica interativa: clique no elemento para ver índices de corredor (Δ, V, R, leakage) e métricas derivadas.</p>
+  </header>
+
+  <main class="layout">
+    <section id="pt" class="pt" aria-label="Tabela periódica"></section>
+
+    <aside class="panel" aria-label="Painel de métricas">
+      <h2 id="title">Selecione um elemento</h2>
+      <div id="meta" class="meta">Clique em um símbolo na tabela.</div>
+
+      <div class="grid">
+        <div class="card"><div class="k">Δ (eV)</div><div class="v" id="dlt">—</div></div>
+        <div class="card"><div class="k">V (eV)</div><div class="v" id="v">—</div></div>
+        <div class="card"><div class="k">R = |Δ|/|V|</div><div class="v" id="r">—</div></div>
+        <div class="card"><div class="k">Leakage = sin²φ</div><div class="v" id="leak">—</div></div>
+      </div>
+
+      <h3>Métricas derivadas</h3>
+      <div class="grid">
+        <div class="card"><div class="k">Regime</div><div class="v" id="regime">—</div></div>
+        <div class="card"><div class="k">Δmix ≈ 2|V| (eV)</div><div class="v" id="dmix">—</div></div>
+        <div class="card"><div class="k">Comentário</div><div class="v small" id="comment">—</div></div>
+      </div>
+
+      <details class="raw">
+        <summary>Ver JSON bruto do elemento</summary>
+        <pre id="raw">—</pre>
+      </details>
+    </aside>
+  </main>
+
+  <footer class="foot">
+    <small>GitHub Pages (site estático). Sem backend. Sem drama.</small>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
