@@ -5,85 +5,320 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>corridor-table</title>
   <style>
-    :root { --bg:#0b0f14; --panel:#121a24; --ink:#e9eef7; --muted:#9fb0c3; --line:#243243; --accent:#67b7ff; }
-    body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink); background:var(--bg); }
-    header{ padding:18px 18px 8px 18px; border-bottom:1px solid var(--line); }
-    h1{ margin:0; font-size:22px; letter-spacing:.3px; }
-    header p{ margin:6px 0 0 0; color:var(--muted); font-size:13px; }
-    .wrap{ display:grid; grid-template-columns: 1.3fr .7fr; gap:14px; padding:14px; }
-    @media (max-width: 980px){ .wrap{ grid-template-columns:1fr; } }
-
-    .card{ background:var(--panel); border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    .card h2{ margin:0; padding:12px 14px; font-size:14px; border-bottom:1px solid var(--line); color:var(--muted); font-weight:600; }
-    .pad{ padding:12px 14px; }
-
+    :root{
+      --bg:#0b0f19; --card:#111827; --text:#e5e7eb; --muted:#9ca3af;
+      --line:#243041; --accent:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+      --cell:#0f172a; --cell2:#0b1224;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:linear-gradient(180deg,#050814, #0b0f19);color:var(--text)}
+    header{padding:18px 18px 10px;border-bottom:1px solid var(--line)}
+    header h1{margin:0;font-size:22px;letter-spacing:.2px}
+    header p{margin:6px 0 0;color:var(--muted);max-width:980px;line-height:1.35}
+    .wrap{display:grid;grid-template-columns: 1fr 360px;gap:14px;padding:14px;max-width:1400px;margin:0 auto}
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
+    .card{background:rgba(17,24,39,.78);border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    .card h2{margin:0;padding:12px 12px 0;font-size:15px;color:#d1d5db}
+    .card .inner{padding:12px}
+    .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    input[type="search"]{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);
+      background:#0b1224;color:var(--text);outline:none
+    }
+    .hint{color:var(--muted);font-size:12px;margin-top:8px}
     .grid{
       display:grid;
       grid-template-columns: repeat(18, minmax(34px, 1fr));
       gap:6px;
       padding:12px;
-      overflow:auto;
     }
-    .el{
-      position:relative;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,0.03);
+    .cell{
+      border:1px solid rgba(36,48,65,.85);
+      background:linear-gradient(180deg, rgba(15,23,42,.9), rgba(11,18,36,.9));
       border-radius:10px;
-      padding:8px 6px 7px 6px;
+      padding:8px 6px;
+      text-align:center;
       cursor:pointer;
       user-select:none;
+      transition:transform .06s ease, border-color .06s ease, background .06s ease;
       min-height:44px;
+      display:flex;flex-direction:column;justify-content:center;align-items:center;
     }
-    .el:hover{ outline:2px solid rgba(103,183,255,.35); }
-    .el.active{ outline:2px solid var(--accent); }
-    .sym{ font-weight:800; font-size:13px; }
-    .z{ position:absolute; top:6px; right:7px; font-size:10px; color:var(--muted); }
-
-    .kv{ display:grid; grid-template-columns: 1fr auto; gap:8px 10px; align-items:baseline; font-size:13px; }
-    .k{ color:var(--muted); }
-    .v{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-    .hr{ height:1px; background:var(--line); margin:10px 0; }
-
-    details{ margin-top:10px; }
-    details summary{ cursor:pointer; color:var(--muted); }
-    pre{ background:#0a0f16; border:1px solid var(--line); padding:10px; border-radius:10px; overflow:auto; color:#d7e3f2; font-size:12px; }
-    .foot{ color:var(--muted); font-size:12px; padding:10px 14px 14px; }
-    .tag{ display:inline-block; padding:2px 8px; border:1px solid var(--line); border-radius:999px; font-size:11px; color:var(--muted); }
+    .cell:hover{transform:translateY(-1px);border-color:rgba(34,197,94,.65)}
+    .cell.active{border-color:rgba(34,197,94,.95);box-shadow:0 0 0 2px rgba(34,197,94,.18) inset}
+    .sym{font-weight:700;letter-spacing:.3px}
+    .z{font-size:11px;color:var(--muted);margin-top:2px}
+    .empty{background:transparent;border:1px dashed rgba(36,48,65,.45);cursor:default}
+    .empty:hover{transform:none;border-color:rgba(36,48,65,.45)}
+    .kv{display:grid;grid-template-columns: 1fr auto;gap:8px 10px;align-items:baseline}
+    .k{color:var(--muted);font-size:12px}
+    .v{font-variant-numeric:tabular-nums}
+    .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:12px}
+    .regime{font-weight:700}
+    .regime.ok{color:var(--accent)}
+    .regime.warn{color:var(--warn)}
+    .regime.bad{color:var(--bad)}
+    details{margin-top:10px}
+    summary{cursor:pointer;color:#cbd5e1}
+    pre{margin:8px 0 0;white-space:pre-wrap;background:#0b1224;border:1px solid var(--line);border-radius:10px;padding:10px;color:#cbd5e1;overflow:auto;max-height:240px}
+    footer{padding:14px 18px 18px;color:var(--muted);font-size:12px;max-width:1400px;margin:0 auto}
+    .note{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.35}
   </style>
 </head>
 
 <body>
   <header>
     <h1>corridor-table</h1>
-    <p>Tabela periódica interativa: clique no elemento para ver índices de corredor (Δ, V, R, leakage) e métricas derivadas.</p>
+    <p>Tabela periódica interativa: clique no elemento para ver índices de corredor (Δ, V, R, leakage) e métricas derivadas. Tudo em um único arquivo <code>index.html</code>.</p>
   </header>
 
   <div class="wrap">
     <section class="card">
-      <h2>Tabela periódica (clique)</h2>
-      <div id="ptable" class="grid" aria-label="Tabela periódica"></div>
-      <div class="foot">
-        <span class="tag">GitHub Pages</span>
-        <span class="tag">estático</span>
-        <span class="tag">sem backend</span>
+      <h2 style="padding-bottom:0">Tabela periódica</h2>
+      <div class="inner">
+        <div class="tools">
+          <div style="flex:1;min-width:240px">
+            <input id="q" type="search" placeholder="Buscar: símbolo (Fe), nome (ferro) ou Z (26)..." />
+            <div class="hint">Dica: clique em qualquer elemento. Lanthanídeos/actinídeos aparecem nas linhas extras abaixo.</div>
+          </div>
+          <span class="pill" id="status">Selecione um elemento</span>
+        </div>
+      </div>
+      <div id="ptable" class="grid" aria-label="Periodic table grid"></div>
+      <div class="inner note">
+        Se ao atualizar você ainda vê a página “sem tabela”, faça <b>Ctrl+F5</b> ou abra em janela anônima (cache do Pages é traiçoeiro).
       </div>
     </section>
 
     <aside class="card">
-      <h2>Selecione um elemento</h2>
-      <div class="pad">
+      <h2>Detalhes do elemento</h2>
+      <div class="inner">
         <div class="kv">
-          <div class="k">Elemento</div><div class="v" id="name">—</div>
-          <div class="k">Δ (eV)</div><div class="v" id="delta">—</div>
-          <div class="k">V (eV)</div><div class="v" id="V">—</div>
-          <div class="k">R = |Δ|/|V|</div><div class="v" id="R">—</div>
-          <div class="k">Leakage = sin²φ</div><div class="v" id="leak">—</div>
+          <div class="k">Elemento</div><div class="v" id="el_name">—</div>
+          <div class="k">Z</div><div class="v" id="el_z">—</div>
+          <div class="k">Δ (eV)</div><div class="v" id="el_d">—</div>
+          <div class="k">V (eV)</div><div class="v" id="el_v">—</div>
+          <div class="k">R = |Δ|/|V|</div><div class="v" id="el_r">—</div>
+          <div class="k">Leakage = sin²φ</div><div class="v" id="el_leak">—</div>
         </div>
 
-        <div class="hr"></div>
+        <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
 
         <div class="kv">
-          <div class="k">Regime</div><div class="v" id="regime">—</div>
-          <div class="k">Δmix ≈ 2|V| (eV)</div><div class="v" id="dmix">—</div>
-          <div class="k">Comentário</div><div class="v" id="comment">—</
+          <div class="k">Regime</div><div class="v"><span id="el_reg" class="regime">—</span></div>
+          <div class="k">Δmix ≈ 2|V| (eV)</div><div class="v" id="el_dmix">—</div>
+          <div class="k">Comentário</div><div class="v" id="el_cmt">—</div>
+        </div>
 
+        <details>
+          <summary>Ver JSON bruto do elemento</summary>
+          <pre id="el_json">—</pre>
+        </details>
+
+        <div class="note">
+          <b>Como preencher seus dados do artigo:</b> mais abaixo no código existe um bloco <code>corridorData</code>.
+          Você só troca os números (Δ e V, em eV) para os elementos que quiser.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <footer>
+    GitHub Pages (site estático). Sem backend. Sem drama.
+  </footer>
+
+<script>
+/* ============================================================
+   1) Lista de elementos: símbolo/nome/Z + posição (grupo/período)
+   ============================================================ */
+const elements = [
+  // period 1
+  {Z:1,s:"H",n:"Hidrogênio",g:1,p:1},{Z:2,s:"He",n:"Hélio",g:18,p:1},
+  // period 2
+  {Z:3,s:"Li",n:"Lítio",g:1,p:2},{Z:4,s:"Be",n:"Berílio",g:2,p:2},
+  {Z:5,s:"B",n:"Boro",g:13,p:2},{Z:6,s:"C",n:"Carbono",g:14,p:2},{Z:7,s:"N",n:"Nitrogênio",g:15,p:2},{Z:8,s:"O",n:"Oxigênio",g:16,p:2},{Z:9,s:"F",n:"Flúor",g:17,p:2},{Z:10,s:"Ne",n:"Neônio",g:18,p:2},
+  // period 3
+  {Z:11,s:"Na",n:"Sódio",g:1,p:3},{Z:12,s:"Mg",n:"Magnésio",g:2,p:3},
+  {Z:13,s:"Al",n:"Alumínio",g:13,p:3},{Z:14,s:"Si",n:"Silício",g:14,p:3},{Z:15,s:"P",n:"Fósforo",g:15,p:3},{Z:16,s:"S",n:"Enxofre",g:16,p:3},{Z:17,s:"Cl",n:"Cloro",g:17,p:3},{Z:18,s:"Ar",n:"Argônio",g:18,p:3},
+  // period 4
+  {Z:19,s:"K",n:"Potássio",g:1,p:4},{Z:20,s:"Ca",n:"Cálcio",g:2,p:4},
+  {Z:21,s:"Sc",n:"Escândio",g:3,p:4},{Z:22,s:"Ti",n:"Titânio",g:4,p:4},{Z:23,s:"V",n:"Vanádio",g:5,p:4},{Z:24,s:"Cr",n:"Cromo",g:6,p:4},{Z:25,s:"Mn",n:"Manganês",g:7,p:4},{Z:26,s:"Fe",n:"Ferro",g:8,p:4},{Z:27,s:"Co",n:"Cobalto",g:9,p:4},{Z:28,s:"Ni",n:"Níquel",g:10,p:4},{Z:29,s:"Cu",n:"Cobre",g:11,p:4},{Z:30,s:"Zn",n:"Zinco",g:12,p:4},
+  {Z:31,s:"Ga",n:"Gálio",g:13,p:4},{Z:32,s:"Ge",n:"Germânio",g:14,p:4},{Z:33,s:"As",n:"Arsênio",g:15,p:4},{Z:34,s:"Se",n:"Selênio",g:16,p:4},{Z:35,s:"Br",n:"Bromo",g:17,p:4},{Z:36,s:"Kr",n:"Criptônio",g:18,p:4},
+  // period 5
+  {Z:37,s:"Rb",n:"Rubídio",g:1,p:5},{Z:38,s:"Sr",n:"Estrôncio",g:2,p:5},
+  {Z:39,s:"Y",n:"Ítrio",g:3,p:5},{Z:40,s:"Zr",n:"Zircônio",g:4,p:5},{Z:41,s:"Nb",n:"Nióbio",g:5,p:5},{Z:42,s:"Mo",n:"Molibdênio",g:6,p:5},{Z:43,s:"Tc",n:"Tecnécio",g:7,p:5},{Z:44,s:"Ru",n:"Rutênio",g:8,p:5},{Z:45,s:"Rh",n:"Ródio",g:9,p:5},{Z:46,s:"Pd",n:"Paládio",g:10,p:5},{Z:47,s:"Ag",n:"Prata",g:11,p:5},{Z:48,s:"Cd",n:"Cádmio",g:12,p:5},
+  {Z:49,s:"In",n:"Índio",g:13,p:5},{Z:50,s:"Sn",n:"Estanho",g:14,p:5},{Z:51,s:"Sb",n:"Antimônio",g:15,p:5},{Z:52,s:"Te",n:"Telúrio",g:16,p:5},{Z:53,s:"I",n:"Iodo",g:17,p:5},{Z:54,s:"Xe",n:"Xenônio",g:18,p:5},
+  // period 6 (La placeholder at group 3, and lanthanides below)
+  {Z:55,s:"Cs",n:"Césio",g:1,p:6},{Z:56,s:"Ba",n:"Bário",g:2,p:6},
+  {Z:57,s:"La",n:"Lantânio",g:3,p:6,lanth:true},
+  {Z:72,s:"Hf",n:"Háfnio",g:4,p:6},{Z:73,s:"Ta",n:"Tântalo",g:5,p:6},{Z:74,s:"W",n:"Tungstênio",g:6,p:6},{Z:75,s:"Re",n:"Rênio",g:7,p:6},{Z:76,s:"Os",n:"Ósmio",g:8,p:6},{Z:77,s:"Ir",n:"Irídio",g:9,p:6},{Z:78,s:"Pt",n:"Platina",g:10,p:6},{Z:79,s:"Au",n:"Ouro",g:11,p:6},{Z:80,s:"Hg",n:"Mercúrio",g:12,p:6},
+  {Z:81,s:"Tl",n:"Tálio",g:13,p:6},{Z:82,s:"Pb",n:"Chumbo",g:14,p:6},{Z:83,s:"Bi",n:"Bismuto",g:15,p:6},{Z:84,s:"Po",n:"Polônio",g:16,p:6},{Z:85,s:"At",n:"Astato",g:17,p:6},{Z:86,s:"Rn",n:"Radônio",g:18,p:6},
+  // period 7 (Ac placeholder at group 3, actinides below)
+  {Z:87,s:"Fr",n:"Frâncio",g:1,p:7},{Z:88,s:"Ra",n:"Rádio",g:2,p:7},
+  {Z:89,s:"Ac",n:"Actínio",g:3,p:7,act:true},
+  {Z:104,s:"Rf",n:"Rutherfórdio",g:4,p:7},{Z:105,s:"Db",n:"Dúbnio",g:5,p:7},{Z:106,s:"Sg",n:"Seabórgio",g:6,p:7},{Z:107,s:"Bh",n:"Bóhrio",g:7,p:7},{Z:108,s:"Hs",n:"Hássio",g:8,p:7},{Z:109,s:"Mt",n:"Meitnério",g:9,p:7},{Z:110,s:"Ds",n:"Darmstádtio",g:10,p:7},{Z:111,s:"Rg",n:"Roentgênio",g:11,p:7},{Z:112,s:"Cn",n:"Copernício",g:12,p:7},
+  {Z:113,s:"Nh",n:"Nihônio",g:13,p:7},{Z:114,s:"Fl",n:"Fleróvio",g:14,p:7},{Z:115,s:"Mc",n:"Moscóvio",g:15,p:7},{Z:116,s:"Lv",n:"Livermório",g:16,p:7},{Z:117,s:"Ts",n:"Tenessino",g:17,p:7},{Z:118,s:"Og",n:"Oganessônio",g:18,p:7},
+];
+
+// Lanthanides (57–71) shown in extra row (period 8, groups 4–17)
+const lanth = [
+  {Z:57,s:"La",n:"Lantânio"},{Z:58,s:"Ce",n:"Cério"},{Z:59,s:"Pr",n:"Praseodímio"},{Z:60,s:"Nd",n:"Neodímio"},{Z:61,s:"Pm",n:"Promécio"},
+  {Z:62,s:"Sm",n:"Samário"},{Z:63,s:"Eu",n:"Európio"},{Z:64,s:"Gd",n:"Gadolínio"},{Z:65,s:"Tb",n:"Térbio"},{Z:66,s:"Dy",n:"Disprósio"},
+  {Z:67,s:"Ho",n:"Hólmio"},{Z:68,s:"Er",n:"Érbio"},{Z:69,s:"Tm",n:"Túlio"},{Z:70,s:"Yb",n:"Itérbio"},{Z:71,s:"Lu",n:"Lutécio"},
+].map((e,i)=>({...e,g:4+i,p:8}));
+
+// Actinides (89–103) shown in extra row (period 9, groups 4–17)
+const act = [
+  {Z:89,s:"Ac",n:"Actínio"},{Z:90,s:"Th",n:"Tório"},{Z:91,s:"Pa",n:"Protactínio"},{Z:92,s:"U",n:"Urânio"},{Z:93,s:"Np",n:"Neptúnio"},
+  {Z:94,s:"Pu",n:"Plutônio"},{Z:95,s:"Am",n:"Amerício"},{Z:96,s:"Cm",n:"Cúrio"},{Z:97,s:"Bk",n:"Berquélio"},{Z:98,s:"Cf",n:"Califórnio"},
+  {Z:99,s:"Es",n:"Einstênio"},{Z:100,s:"Fm",n:"Férmio"},{Z:101,s:"Md",n:"Mendelévio"},{Z:102,s:"No",n:"Nobélio"},{Z:103,s:"Lr",n:"Laurêncio"},
+].map((e,i)=>({...e,g:4+i,p:9}));
+
+const all = [...elements, ...lanth, ...act];
+
+/* ============================================================
+   2) Dados de corredor (DO ARTIGO) — você edita aqui depois
+      Formato: símbolo -> {Delta:..., V:..., comment:"..."}
+   ============================================================ */
+const corridorData = {
+  // Exemplos (troque pelos seus números reais do artigo)
+  "Pd": {Delta: 0.08, V: 0.12, comment:"Exemplo: corredor forte (ilustrativo)."},
+  "Fe": {Delta: 0.35, V: 0.05, comment:"Exemplo: gap operacional alto (ilustrativo)."},
+  "Au": {Delta: 0.18, V: 0.11, comment:"Exemplo: SOC/mistura relevante (ilustrativo)."}
+};
+
+/* ============================================================
+   3) Renderização da tabela + interação
+   ============================================================ */
+const ptable = document.getElementById("ptable");
+const q = document.getElementById("q");
+const status = document.getElementById("status");
+
+const el_name = document.getElementById("el_name");
+const el_z = document.getElementById("el_z");
+const el_d = document.getElementById("el_d");
+const el_v = document.getElementById("el_v");
+const el_r = document.getElementById("el_r");
+const el_leak = document.getElementById("el_leak");
+const el_reg = document.getElementById("el_reg");
+const el_dmix = document.getElementById("el_dmix");
+const el_cmt = document.getElementById("el_cmt");
+const el_json = document.getElementById("el_json");
+
+function fmt(x){
+  if (x===null || x===undefined || Number.isNaN(x)) return "—";
+  return (Math.abs(x) >= 1e3 || Math.abs(x) < 1e-3) ? x.toExponential(3) : x.toFixed(3);
+}
+
+function classify(R){
+  if (!isFinite(R)) return {txt:"—", cls:""};
+  if (R >= 5) return {txt:"R≫1 (estável)", cls:"ok"};
+  if (R >= 1) return {txt:"R~1 (transição)", cls:"warn"};
+  return {txt:"R<1 (corredor)", cls:"bad"};
+}
+
+function getMetrics(sym){
+  const d = corridorData[sym];
+  if(!d) return null;
+  const Delta = Number(d.Delta);
+  const V = Number(d.V);
+  const R = Math.abs(Delta)/Math.abs(V);
+  // Leakage ~ sin^2(phi). No 2x2: tan(2phi)=2V/Delta => sin^2(phi) = (1 - cos(2phi))/2
+  const cos2 = (Delta===0 && V===0) ? 1 : (Delta/Math.sqrt(Delta*Delta + 4*V*V));
+  const leak = (1 - cos2)/2;
+  const dmix = 2*Math.abs(V);
+  const reg = classify(R);
+  return {Delta,V,R,leak,dmix,comment:d.comment||"", reg};
+}
+
+function makeEmptyCell(col){
+  const d = document.createElement("div");
+  d.className="cell empty";
+  d.style.gridColumn = col;
+  d.innerHTML = "&nbsp;";
+  return d;
+}
+
+function makeCell(e){
+  const d = document.createElement("div");
+  d.className="cell";
+  d.dataset.sym = e.s;
+  d.dataset.z = e.Z;
+  d.dataset.name = e.n;
+  d.style.gridColumn = e.g;
+  d.style.gridRow = e.p;
+  d.innerHTML = `<div class="sym">${e.s}</div><div class="z">${e.Z}</div>`;
+  d.addEventListener("click", ()=> selectElement(e.s));
+  return d;
+}
+
+let current = null;
+
+function selectElement(sym){
+  // highlight
+  document.querySelectorAll(".cell.active").forEach(x=>x.classList.remove("active"));
+  const node = [...document.querySelectorAll(".cell")].find(x=>x.dataset.sym===sym && !x.classList.contains("empty"));
+  if(node) node.classList.add("active");
+  current = sym;
+
+  const e = all.find(x=>x.s===sym);
+  const m = getMetrics(sym);
+
+  status.textContent = `Selecionado: ${sym}`;
+  el_name.textContent = e ? `${e.n} (${e.s})` : sym;
+  el_z.textContent = e ? String(e.Z) : "—";
+
+  if(!m){
+    el_d.textContent = "—";
+    el_v.textContent = "—";
+    el_r.textContent = "—";
+    el_leak.textContent = "—";
+    el_dmix.textContent = "—";
+    el_reg.textContent = "—";
+    el_reg.className = "regime";
+    el_cmt.textContent = "Sem dados de corredor (preencha no bloco corridorData do código).";
+    el_json.textContent = JSON.stringify({element:e, corridor:null}, null, 2);
+    return;
+  }
+
+  el_d.textContent = fmt(m.Delta);
+  el_v.textContent = fmt(m.V);
+  el_r.textContent = fmt(m.R);
+  el_leak.textContent = fmt(m.leak);
+  el_dmix.textContent = fmt(m.dmix);
+
+  el_reg.textContent = m.reg.txt;
+  el_reg.className = "regime " + (m.reg.cls||"");
+  el_cmt.textContent = m.comment || "—";
+
+  el_json.textContent = JSON.stringify({element:e, corridor:corridorData[sym], derived:m}, null, 2);
+}
+
+function render(filterFn=null){
+  ptable.innerHTML = "";
+  // build a 9-row grid; we will place only cells with explicit positions and leave gaps as empties
+  // We don't need to manually create empties for all; CSS grid will just have gaps.
+  // But to keep layout tidy, we render all element cells and rely on grid positions.
+  all.forEach(e=>{
+    if(filterFn && !filterFn(e)) return;
+    ptable.appendChild(makeCell(e));
+  });
+}
+
+function norm(s){return (s||"").toLowerCase().trim();}
+
+q.addEventListener("input", ()=>{
+  const t = norm(q.value);
+  if(!t){ render(); return; }
+  const isNum = /^[0-9]+$/.test(t);
+  render((e)=>{
+    if(isNum) return String(e.Z)===t;
+    return norm(e.s)===t || norm(e.n).includes(t);
+  });
+});
+
+// initial render
+render();
+</script>
+</body>
+</html>
